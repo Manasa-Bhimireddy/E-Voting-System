@@ -193,7 +193,7 @@ https://github.com/Manasa-Bhimireddy/E-Voting-System
 
 🌐 Live Demo
 
-➡️ "Open Live Demo" (https://e-voting-system-1-lrqq.onrender.com)
+➡️ "Open Live Demo" (https://e-voting-system-1-1rqq.onrender.com)
 
 🔧 Backend API
 
