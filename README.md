@@ -112,7 +112,6 @@ JWT_SECRET=your_jwt_secret
 ADMIN_SECRET_KEY=admin_secret_key
 
 Backend runs at:
-
 https://e-voting-system-cwxk.onrender.com
 
 ---
@@ -124,7 +123,6 @@ npm install
 npm run dev
 
 Frontend runs at:
-
 http://localhost:5173
 
 ---
@@ -188,20 +186,21 @@ After voting:
 
 ---
 
-
 📌 GitHub Repository
 
-🔗 GitHub: https://github.com/Manasa-Bhimireddy/E-Voting-System
+🔗 GitHub:
+https://github.com/Manasa-Bhimireddy/E-Voting-System
 
-## Live Demo
-[Open Live Demo](https://e-voting-system-1-lrqq.onrender.com)
+🌐 Live Demo
 
-## Backend API
-[Open Backend Server](https://e-voting-system-cwxk.onrender.com)
+➡️ "Open Live Demo" (https://e-voting-system-1-lrqq.onrender.com)
+
+🔧 Backend API
+
+➡️ "Open Backend Server" (https://e-voting-system-cwxk.onrender.com)
 
 ---
 
 👨‍💻 Developer
 
 Built with ❤️ by Bhimireddy Manasa
-
