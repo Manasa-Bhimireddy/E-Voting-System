@@ -187,18 +187,17 @@ After voting:
 - Deployment on cloud infrastructure
 
 ---
-## 🌐 Live Demo
 
-🔗 **Frontend (VoteChain App):**  
+
+📌 GitHub Repository
+
+🔗 GitHub: https://github.com/Manasa-Bhimireddy/E-Voting-System
+
+## Live Demo
 [Open Live Demo](https://e-voting-system-1-lrqq.onrender.com)
 
-🔗 **Backend API:**  
+## Backend API
 [Open Backend Server](https://e-voting-system-cwxk.onrender.com)
-
-## 📌 GitHub Repository
-
-[View Source Code](https://github.com/Manasa-Bhimireddy/E-Voting-System)
-
 
 ---
 
