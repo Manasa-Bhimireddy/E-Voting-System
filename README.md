@@ -85,7 +85,7 @@ E-Voting-System/
 │   ├── index.html
 │   └── vite.config.js
 │
-└── README.md
+└── README.md    ```
 
 ---
 
