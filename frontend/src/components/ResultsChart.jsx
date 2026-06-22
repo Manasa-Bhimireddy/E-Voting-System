@@ -55,11 +55,11 @@ export const ResultsChart = ({ candidates }) => {
   }
 
   // Calculate total votes cast to check if we have any data
-  const totalVotes = candidates.reduce((sum, c) => sum + c.voteCount, 0);
+  const totalVotes = candidates.reduce((sum, c) => sum + (c.voteCount || 0), 0);
 
   const chartData = candidates.map(c => ({
     name: c.name,
-    votes: c.voteCount,
+    votes: c.voteCount || 0,
     party: c.party,
   }));
 

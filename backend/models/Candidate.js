@@ -1,11 +1,6 @@
 import mongoose from 'mongoose';
 
 const voteLogSchema = new mongoose.Schema({
-  voterId: {
-    type: mongoose.Schema.Types.ObjectId,
-    ref: 'User',
-    required: true,
-  },
   votedAt: {
     type: Date,
     default: Date.now,
@@ -13,6 +8,11 @@ const voteLogSchema = new mongoose.Schema({
 }, { _id: false });
 
 const candidateSchema = new mongoose.Schema({
+  electionId: {
+    type: mongoose.Schema.Types.ObjectId,
+    ref: 'Election',
+    required: true,
+  },
   name: {
     type: String,
     required: [true, 'Please add a candidate name'],
@@ -26,6 +26,14 @@ const candidateSchema = new mongoose.Schema({
   age: {
     type: Number,
     required: [true, 'Please add candidate age'],
+  },
+  photoUrl: {
+    type: String,
+    default: '',
+  },
+  partySymbolUrl: {
+    type: String,
+    default: '',
   },
   voteCount: {
     type: Number,

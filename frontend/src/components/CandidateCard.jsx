@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { UserCheck, Award, HeartHandshake } from 'lucide-react';
+import { UserCheck, Award, HeartHandshake, Shield } from 'lucide-react';
 
 const getPartyTheme = (party = '') => {
   const p = party.toLowerCase();
@@ -37,12 +37,51 @@ export const CandidateCard = ({ candidate, onVote, hasVoted, isUserAdmin }) => {
     .toUpperCase()
     .slice(0, 2);
 
+  const partyInitial = candidate.party
+    ? candidate.party.charAt(0).toUpperCase()
+    : 'P';
+
   return (
     <div className="candidate-card" style={{ '--card-accent': theme.accent }}>
+      {/* Header with gradient and photos */}
       <div className="candidate-card-header" style={{ background: theme.gradient }}>
-        <div className="candidate-avatar">
-          {initials}
+        <div className="candidate-avatar-container">
+          {candidate.photoUrl ? (
+            <img 
+              src={candidate.photoUrl} 
+              alt={candidate.name} 
+              className="candidate-photo-img" 
+              onError={(e) => {
+                // If image fails to load, clear photoUrl to fall back to initials
+                e.target.style.display = 'none';
+              }}
+            />
+          ) : (
+            <div className="candidate-avatar">
+              {initials}
+            </div>
+          )}
+
+          {/* Party Symbol Overlay */}
+          <div className="party-symbol-badge-overlay" title={candidate.party}>
+            {candidate.partySymbolUrl ? (
+              <img 
+                src={candidate.partySymbolUrl} 
+                alt={candidate.party} 
+                className="party-symbol-img"
+                onError={(e) => {
+                  e.target.style.display = 'none';
+                }}
+              />
+            ) : (
+              <div className="party-symbol-fallback">
+                <Shield size={10} style={{ fill: 'currentColor' }} />
+                <span>{partyInitial}</span>
+              </div>
+            )}
+          </div>
         </div>
+
         <div className="candidate-meta">
           <h3>{candidate.name}</h3>
           <span className="candidate-party">{candidate.party}</span>
@@ -55,19 +94,21 @@ export const CandidateCard = ({ candidate, onVote, hasVoted, isUserAdmin }) => {
           <span className="info-value">{candidate.age} years</span>
         </div>
         
-        <div className="info-row">
-          <span className="info-label">Total Votes</span>
-          <div className="vote-badge-container">
-            <Award size={16} className="vote-icon" />
-            <span className="info-value vote-count">{candidate.voteCount}</span>
+        {candidate.voteCount !== null && (
+          <div className="info-row">
+            <span className="info-label">Total Votes</span>
+            <div className="vote-badge-container">
+              <Award size={16} className="vote-icon" />
+              <span className="info-value vote-count">{candidate.voteCount}</span>
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       <div className="candidate-card-footer">
         {isUserAdmin ? (
           <div className="admin-view-tag">
-            <span>Admin view mode</span>
+            <span>Locked / View Mode</span>
           </div>
         ) : hasVoted ? (
           <div className="vote-disabled-status">

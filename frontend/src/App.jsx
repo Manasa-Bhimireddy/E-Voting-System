@@ -2,10 +2,12 @@ import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { AuthProvider, useAuth } from './context/AuthContext';
 import { Navbar } from './components/Navbar';
+import Home from './pages/Home';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
 import AdminPanel from './pages/AdminPanel';
+import VotePage from './pages/VotePage';
 import { ProtectedRoute } from './components/ProtectedRoute';
 
 // Sub-component to access Auth context details after initialization
@@ -17,6 +19,8 @@ function AppRoutes() {
       <Navbar />
       <main className="app-content-area">
         <Routes>
+          <Route path="/" element={<Home />} />
+          <Route path="/home" element={<Home />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
           <Route
@@ -24,6 +28,14 @@ function AppRoutes() {
             element={
               <ProtectedRoute>
                 <Dashboard />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/vote/:electionId"
+            element={
+              <ProtectedRoute>
+                <VotePage />
               </ProtectedRoute>
             }
           />
@@ -39,7 +51,7 @@ function AppRoutes() {
           <Route
             path="*"
             element={
-              <Navigate to={user ? '/dashboard' : '/login'} replace />
+              <Navigate to={user ? '/dashboard' : '/home'} replace />
             }
           />
         </Routes>

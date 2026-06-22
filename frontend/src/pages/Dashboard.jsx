@@ -1,53 +1,123 @@
 import React, { useState, useEffect, useCallback } from 'react';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { CandidateCard } from '../components/CandidateCard';
-import { ResultsChart } from '../components/ResultsChart';
-import { ShieldCheck, Vote, Award, Landmark, RefreshCw, Info } from 'lucide-react';
+import { ShieldCheck, Vote, Landmark, RefreshCw, Calendar, Clock, Lock, Info, AlertTriangle, ArrowRight } from 'lucide-react';
 
 export default function Dashboard() {
-  const { user, authFetch, refreshUserStatus } = useAuth();
-  const [candidates, setCandidates] = useState([]);
+  const { user, authFetch } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+  
+  const [elections, setElections] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [successMessage, setSuccessMessage] = useState('');
 
-  const fetchCandidates = useCallback(async () => {
+  // Synchronize state success message if passed from redirect
+  useEffect(() => {
+    if (location.state?.success) {
+      setSuccessMessage(location.state.success);
+      // Clean up router history state to avoid banner persisting on manual refresh
+      window.history.replaceState({}, document.title);
+    }
+  }, [location]);
+
+  const fetchElections = useCallback(async () => {
     try {
       setLoading(true);
       setError('');
-      const data = await authFetch('/candidates');
-      setCandidates(data);
+      const data = await authFetch('/elections');
+      setElections(data);
     } catch (err) {
-      setError(err.message || 'Failed to fetch candidate directory');
+      setError(err.message || 'Failed to fetch election registry');
     } finally {
       setLoading(false);
     }
   }, [authFetch]);
 
   useEffect(() => {
-    fetchCandidates();
-  }, [fetchCandidates]);
+    fetchElections();
+  }, [fetchElections]);
 
-  const handleVote = async (candidateId) => {
-    try {
-      setError('');
-      setSuccessMessage('');
-      
-      const response = await authFetch(`/candidates/vote/${candidateId}`, {
-        method: 'POST',
-      });
+  const getElectionStatus = (el) => {
+    const now = new Date();
+    const start = new Date(el.startDate);
+    const end = new Date(el.endDate);
+    
+    if (now < start) return { label: 'Upcoming', class: 'upcoming', icon: Calendar };
+    if (now > end) return { label: 'Closed', class: 'closed', icon: Lock };
+    return { label: 'Active', class: 'active', icon: Clock };
+  };
 
-      setSuccessMessage(response.message || 'Vote cast successfully!');
-      
-      // Sync local user states and refresh list
-      await refreshUserStatus();
-      await fetchCandidates();
-      
-      // Scroll to top to see charts and success banner
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-    } catch (err) {
-      setError(err.message || 'Error occurred while voting');
-    }
+  // Group elections by timezone status
+  const activeElections = elections.filter(el => getElectionStatus(el).label === 'Active');
+  const upcomingElections = elections.filter(el => getElectionStatus(el).label === 'Upcoming');
+  const closedElections = elections.filter(el => getElectionStatus(el).label === 'Closed');
+
+  const renderElectionCard = (el) => {
+    const status = getElectionStatus(el);
+    const StatusIcon = status.icon;
+
+    return (
+      <div 
+        key={el._id} 
+        onClick={() => navigate(`/vote/${el._id}`)}
+        className="election-card-item glass-panel animate-fade-in"
+      >
+        <div className="card-item-header">
+          <span className={`status-tag ${status.class}`}>
+            <StatusIcon size={12} style={{ marginRight: '4px' }} />
+            {status.label}
+          </span>
+          
+          <div className="card-item-meta">
+            {el.isEligible ? (
+              <span className="eligibility-tag eligible">
+                <ShieldCheck size={12} />
+                <span>Eligible Voter</span>
+              </span>
+            ) : (
+              <span className="eligibility-tag ineligible">
+                <Lock size={12} />
+                <span>Not Pre-registered</span>
+              </span>
+            )}
+          </div>
+        </div>
+
+        <div className="card-item-body">
+          <h3>{el.title}</h3>
+          <p>{el.description.length > 100 ? `${el.description.substring(0, 100)}...` : el.description}</p>
+        </div>
+
+        <div className="card-item-footer">
+          <div className="card-dates">
+            <div className="card-date-col">
+              <span className="lbl">Open</span>
+              <span className="val">{new Date(el.startDate).toLocaleDateString()}</span>
+            </div>
+            <div className="card-date-col">
+              <span className="lbl">Close</span>
+              <span className="val">{new Date(el.endDate).toLocaleDateString()}</span>
+            </div>
+          </div>
+
+          <div className="card-actions">
+            {el.isEligible && (
+              el.hasVoted ? (
+                <span className="vote-status-badge-inline voted">Ballot Cast</span>
+              ) : (
+                <span className="vote-status-badge-inline pending">Vote Pending</span>
+              )
+            )}
+            <button className="enter-portal-btn">
+              <span>Enter Portal</span>
+              <ArrowRight size={14} />
+            </button>
+          </div>
+        </div>
+      </div>
+    );
   };
 
   return (
@@ -57,53 +127,31 @@ export default function Dashboard() {
         <div className="header-brand">
           <Landmark size={28} className="header-icon" />
           <div>
-            <h1>National Election Ledger</h1>
+            <h1>National Election Registry</h1>
             <p className="system-time">
               Current Session: {new Date().toLocaleDateString(undefined, { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
             </p>
           </div>
         </div>
 
-        <div className="eligibility-panel">
-          <div className="eligibility-item">
-            <span className="label">Voter Status</span>
-            <div className="value-container">
-              <ShieldCheck size={16} className="status-ok-icon" />
-              <span className="value text-success">VERIFIED ELIGIBLE</span>
-            </div>
-          </div>
-
-          <div className="eligibility-item">
-            <span className="label">Ballot Record</span>
-            <div className="value-container">
-              {user.isVoted ? (
-                <>
-                  <div className="pulse-dot green"></div>
-                  <span className="value text-secured font-bold">BALLOT RECORDED</span>
-                </>
-              ) : user.role === 'admin' ? (
-                <>
-                  <div className="pulse-dot gold"></div>
-                  <span className="value text-warning">ADMIN VIEW</span>
-                </>
-              ) : (
-                <>
-                  <div className="pulse-dot blue"></div>
-                  <span className="value text-pending">PENDING SUBMISSION</span>
-                </>
-              )}
-            </div>
-          </div>
-        </div>
+        <button 
+          onClick={fetchElections} 
+          disabled={loading} 
+          className="refresh-btn"
+          title="Sync Ledger"
+        >
+          <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
+          <span>Sync Ledger</span>
+        </button>
       </header>
 
-      {/* Global Message Banner */}
+      {/* Message banners */}
       {successMessage && (
         <div className="success-banner animate-slide-down">
-          <Vote className="success-banner-icon animate-bounce" size={24} />
+          <ShieldCheck size={24} className="text-success animate-bounce" />
           <div className="success-banner-text">
-            <h4>{successMessage}</h4>
-            <p>Your cryptographic receipt has been compiled. Double voting is restricted.</p>
+            <h4>Ballot Submission Confirmed</h4>
+            <p>{successMessage}</p>
           </div>
         </div>
       )}
@@ -115,81 +163,59 @@ export default function Dashboard() {
         </div>
       )}
 
-      {/* Main Grid */}
-      <div className="dashboard-grid">
-        {/* Results Section - Render Chart if voted or admin */}
-        {(user.isVoted || user.role === 'admin') && (
-          <section className="results-section glass-panel animate-fade-in">
-            {loading ? (
-              <div className="spinner-container">
-                <div className="spinner"></div>
-                <p>Syncing ledger details...</p>
+      {loading && elections.length === 0 ? (
+        <div className="loading-container">
+          <div className="spinner"></div>
+          <p>Fetching scheduled election ledger...</p>
+        </div>
+      ) : elections.length === 0 ? (
+        <div className="empty-candidates-card glass-panel">
+          <Landmark size={48} className="muted-icon" />
+          <h3>No Elections Configured</h3>
+          <p>The election commission has not scheduled any upcoming, active, or closed polls.</p>
+        </div>
+      ) : (
+        <div className="elections-grid-sections">
+          {/* Active Polls */}
+          {activeElections.length > 0 && (
+            <section className="election-category-section">
+              <div className="category-header">
+                <div className="pulse-dot green"></div>
+                <h2>Active Elections</h2>
               </div>
-            ) : (
-              <ResultsChart candidates={candidates} />
-            )}
-          </section>
-        )}
-
-        {/* Voting/Candidate Directory Section */}
-        <section className="candidates-section">
-          <div className="section-header">
-            <h2>
-              {user.isVoted 
-                ? 'Registered Candidate Directory' 
-                : 'Cast Your Ballot: Available Candidates'}
-            </h2>
-            <button 
-              onClick={fetchCandidates} 
-              disabled={loading} 
-              className="refresh-btn"
-              title="Sync Ledger"
-            >
-              <RefreshCw size={16} className={loading ? 'animate-spin' : ''} />
-              <span>Sync Ledger</span>
-            </button>
-          </div>
-
-          {!user.isVoted && user.role !== 'admin' && (
-            <div className="ballot-info-alert glass-panel">
-              <Info className="alert-icon" size={20} />
-              <div>
-                <h5>Secure Casting Notice</h5>
-                <p>
-                  You are authorized to vote for exactly <strong>one</strong> candidate. Once cast, the action cannot be reverted, and the system results tracker will compile the updated figures immediately.
-                </p>
+              <div className="elections-grid">
+                {activeElections.map(renderElectionCard)}
               </div>
-            </div>
+            </section>
           )}
 
-          {loading && candidates.length === 0 ? (
-            <div className="loading-grid-placeholder">
-              <div className="spinner"></div>
-              <p>Fetching candidate database...</p>
-            </div>
-          ) : candidates.length === 0 ? (
-            <div className="empty-candidates-card glass-panel">
-              <Landmark size={48} className="muted-icon" />
-              <h3>No Candidates Enlisted</h3>
-              <p>
-                The election commission has not registered any nominees. Admins can register candidates using the Admin Panel.
-              </p>
-            </div>
-          ) : (
-            <div className="candidates-grid">
-              {candidates.map((candidate) => (
-                <CandidateCard
-                  key={candidate._id}
-                  candidate={candidate}
-                  onVote={handleVote}
-                  hasVoted={user.isVoted}
-                  isUserAdmin={user.role === 'admin'}
-                />
-              ))}
-            </div>
+          {/* Upcoming Polls */}
+          {upcomingElections.length > 0 && (
+            <section className="election-category-section">
+              <div className="category-header">
+                <div className="pulse-dot blue"></div>
+                <h2>Upcoming Elections</h2>
+              </div>
+              <div className="elections-grid">
+                {upcomingElections.map(renderElectionCard)}
+              </div>
+            </section>
           )}
-        </section>
-      </div>
+
+          {/* Closed Polls */}
+          {closedElections.length > 0 && (
+            <section className="election-category-section">
+              <div className="category-header">
+                <div className="pulse-dot gold"></div>
+                <h2>Closed Elections (Results Announced)</h2>
+              </div>
+              <div className="elections-grid">
+                {closedElections.map(renderElectionCard)}
+              </div>
+            </section>
+          )}
+        </div>
+      )}
     </div>
   );
 }
